@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Phiếu lương — My Masterise</title>
+  <link rel="stylesheet" href="base.css">
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-bold);
+    }
+
+    .phone {
+      position: relative;
+      width: 375px;
+      height: 812px;
+      overflow: hidden;
+      background: var(--bg-page);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-large);
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.22s ease, visibility 0s 0.22s;
+    }
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
+      transition: opacity 0.22s ease, visibility 0s 0s;
+    }
+
+    ::-webkit-scrollbar { display: none; }
+    * { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .status-bar {
+      height: 44px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 var(--spacing-lg) var(--spacing-xs);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status-bar--transparent { background: transparent; color: var(--text-invert); }
+    .status-bar--branded { background: var(--bg-brand-primary); color: var(--text-invert); }
+    .status-bar__right { display: flex; align-items: center; gap: var(--spacing-2xs); }
+
+    .nav-header {
+      height: 44px;
+      background: var(--bg-brand-primary);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--spacing-md);
+      gap: var(--spacing-md);
+      flex-shrink: 0;
+    }
+    .nav-header__back,
+    .nav-header__action {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text-invert);
+    }
+    .nav-header__back {
+      width: 44px;
+      margin-left: -8px;
+    }
+    .nav-header__title {
+      flex: 1;
+      color: var(--text-invert);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 24px;
+      min-width: 0;
+    }
+    .nav-header__action {
+      gap: var(--spacing-2xs);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+      padding-left: var(--spacing-xs);
+    }
+    .nav-header__select {
+      max-width: 132px;
+      gap: var(--spacing-2xs);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+      white-space: nowrap;
+    }
+    .employee-popover {
+      position: absolute;
+      top: 148px;
+      right: var(--spacing-md);
+      z-index: 450;
+      width: 154px;
+      border-radius: var(--radius-xs);
+      background: var(--bg-surface-white);
+      box-shadow: var(--shadow-large);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(-8px);
+      transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s 0.18s;
+    }
+    .employee-popover.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
+      transform: translateY(0);
+      transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s 0s;
+    }
+    .employee-popover::before {
+      content: "";
+      position: absolute;
+      top: -16px;
+      right: var(--spacing-lg);
+      border-left: var(--spacing-sm) solid transparent;
+      border-right: var(--spacing-sm) solid transparent;
+      border-bottom: var(--spacing-md) solid var(--bg-surface-white);
+    }
+    .employee-option {
+      width: 100%;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 var(--spacing-lg);
+      border-bottom: 1px solid var(--bg-divider-grey);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 20px;
+      text-align: left;
+    }
+    .employee-option:last-child { border-bottom: none; }
+
+    .btn {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      border: none;
+      border-radius: var(--radius-xs);
+      padding: var(--spacing-md);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .btn--primary { background: var(--bg-brand-primary); color: var(--text-invert); }
+    .btn--secondary { background: var(--bg-brand-secondary); color: var(--text-brand); }
+    .btn--ghost {
+      width: auto;
+      padding: var(--spacing-xs) 0;
+      background: transparent;
+      color: var(--text-brand);
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .btn--icon {
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .btn-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 300;
+      background: var(--bg-surface-white);
+      border-top: 1px solid var(--bg-divider-grey);
+    }
+    .btn-bar__group {
+      display: flex;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-xs) var(--spacing-md);
+    }
+    .btn-bar__group--vertical { flex-direction: column; }
+
+    .tab-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 83px;
+      z-index: 200;
+      display: flex;
+      align-items: flex-start;
+      padding-top: var(--spacing-xs);
+      background: var(--bg-surface-white);
+      border-top: 1px solid var(--bg-divider-grey);
+    }
+    .tab-item,
+    .tab-item--qr {
+      flex: 0 0 75px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-2xs);
+      color: var(--icon-primary);
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+    .tab-item.active { color: var(--icon-brand); }
+    .tab-item__icon { font-size: 24px; }
+    .tab-item__label {
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 12px;
+    }
+    .qr-pill {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-brand-primary);
+      color: var(--text-invert);
+    }
+    .noti-wrap { position: relative; display: inline-flex; }
+    .noti-badge,
+    .app-badge {
+      position: absolute;
+      background: var(--bg-error-primary);
+      color: var(--text-invert);
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+      border-radius: var(--radius-xs);
+      min-width: 16px;
+      text-align: center;
+    }
+    .noti-badge { top: -4px; right: -8px; padding: var(--spacing-3xs) var(--spacing-2xs); }
+
+    #screen-home {
+      background: var(--bg-page);
+      background-image: url('bg home.png');
+      background-repeat: no-repeat;
+      background-size: 100% auto;
+      background-position: top center;
+    }
+    .home-header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: var(--spacing-lg) var(--spacing-xl);
+    }
+    .home-header__left { display: flex; flex-direction: column; gap: var(--spacing-3xs); }
+    .home-header__greeting {
+      color: var(--text-invert);
+      font-size: 12px;
+      line-height: 20px;
+    }
+    .home-header__name {
+      color: var(--text-invert);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 28px;
+    }
+    .home-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-divider-white);
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface-grey);
+      color: var(--icon-primary);
+    }
+    .home-body {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-md) calc(83px + var(--spacing-md));
+    }
+    .card {
+      background: var(--bg-surface-white);
+      border-radius: var(--radius-xs);
+      box-shadow: var(--shadow-small);
+      overflow: hidden;
+    }
+    .app-card { min-height: 248px; }
+    .social-card { min-height: 112px; }
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: 80px;
+      gap: var(--spacing-xs) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-2xs);
+      min-height: 80px;
+      justify-content: flex-start;
+      overflow: visible;
+      background: transparent;
+      border: none;
+    }
+    .app-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .app-icon img {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+    }
+    .app-badge {
+      top: -4px;
+      right: -4px;
+      padding: var(--spacing-3xs) var(--spacing-2xs);
+    }
+    .app-badge--beta {
+      background: var(--bg-info-primary);
+      font-size: 8px;
+    }
+    .app-name {
+      display: block;
+      width: 100%;
+      min-height: 20px;
+      flex-shrink: 0;
+      color: var(--text-primary);
+      font-size: 12px;
+      line-height: 20px;
+      text-align: center;
+      overflow: visible;
+    }
+    .app-more {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-brand-secondary);
+      color: var(--text-brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .app-grid-footer {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-top: 1px solid var(--bg-divider-grey);
+    }
+    .link-text {
+      color: var(--text-brand);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+    }
+    .social-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      min-height: 56px;
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--bg-divider-grey);
+    }
+    .social-item:last-child { border-bottom: none; }
+    .social-item__content { flex: 1; }
+    .social-item__title {
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .social-item__count {
+      color: var(--text-brand);
+      font-weight: 700;
+    }
+    .social-emoji {
+      width: 24px;
+      height: 24px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .social-avatars {
+      display: flex;
+      align-items: center;
+      margin-right: var(--spacing-xs);
+    }
+    .s-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-surface-grey);
+      border: 1px solid var(--bg-surface-white);
+      margin-left: -8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .s-avatar:first-child { margin-left: 0; }
+    .s-avatar--more {
+      background: var(--bg-brand-secondary);
+      color: var(--text-brand);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .social-arrow { color: var(--icon-primary); font-size: 20px; }
+    .section-361 {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      margin-top: var(--spacing-xs);
+    }
+    .section-title {
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+    }
+    .banner-361 {
+      position: relative;
+      border-radius: var(--radius-xs);
+      overflow: hidden;
+      aspect-ratio: 343 / 221;
+      background: var(--bg-brand-secondary);
+    }
+    .banner-361 img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .ios-face-auth {
+      position: absolute;
+      inset: 0;
+      z-index: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-xl);
+      background: var(--bg-overlay);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.22s ease, visibility 0s 0.22s;
+    }
+    .ios-face-auth.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
+      transition: opacity 0.22s ease, visibility 0s 0s;
+    }
+    .ios-face-card {
+      width: 248px;
+      min-height: 248px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-xl);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface-white);
+      box-shadow: var(--shadow-large);
+      text-align: center;
+      transform: scale(0.96);
+      transition: transform 0.22s ease;
+    }
+    .ios-face-auth.open .ios-face-card { transform: scale(1); }
+    .ios-face-icon {
+      width: 88px;
+      height: 88px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      color: var(--text-brand);
+      background: var(--bg-brand-secondary);
+    }
+    .ios-face-auth.is-success .ios-face-icon {
+      color: var(--text-success);
+      background: var(--bg-success-secondary);
+    }
+    .ios-face-title {
+      color: var(--text-primary);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 28px;
+    }
+    .ios-face-copy {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 20px;
+    }
+
+    #screen-payslip,
+    #screen-detail { background: var(--bg-page); }
+    .payslip-body,
+    .detail-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: var(--spacing-md) var(--spacing-md) calc(89px + var(--spacing-md));
+    }
+    .payslip-body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-lg);
+      padding: 0 var(--spacing-md) var(--spacing-3xl);
+      background: var(--bg-surface-grey);
+    }
+    .payslip-filter-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      margin: 0 calc(-1 * var(--spacing-md));
+      background: var(--bg-surface-white);
+      border-bottom: 1px solid var(--bg-divider-grey);
+    }
+    .payslip-filter-bar .select-field + .select-field {
+      border-left: 1px solid var(--bg-divider-grey);
+    }
+    .select-field {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      padding: 0 var(--spacing-md);
+      border: none;
+      border-radius: 0;
+      background: var(--bg-surface-white);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+    }
+    .select-field span:first-child { flex: 0 0 auto; }
+    .pay-period {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-xs);
+      min-height: 72px;
+      justify-content: center;
+      margin-top: var(--spacing-2xs);
+      text-align: center;
+    }
+    .pay-period__label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .pay-period__value {
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+    }
+    .work-card {
+      min-height: 188px;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--radius-sm);
+    }
+    .income-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      min-height: 320px;
+      padding: var(--spacing-lg);
+      border-radius: var(--radius-sm);
+    }
+    .list-card { padding: var(--spacing-md); }
+    .pay-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+      min-height: 32px;
+      padding: var(--spacing-2xs) 0;
+      border-bottom: none;
+    }
+    .pay-row:last-child { border-bottom: none; }
+    .pay-row--indent { padding-left: var(--spacing-lg); }
+    .pay-row__label {
+      flex: 1;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .pay-row--indent .pay-row__label { color: var(--text-secondary); }
+    .pay-row__value {
+      max-width: 132px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+      text-align: right;
+      word-break: break-word;
+    }
+    .income-card .pay-row {
+      min-height: 48px;
+      padding: var(--spacing-xs) 0;
+    }
+    .income-card .pay-row__label {
+      max-width: 176px;
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .income-card .pay-row__value {
+      align-self: center;
+    }
+    .net-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-xs);
+      min-height: 48px;
+      padding: var(--spacing-xs) 0 var(--spacing-lg);
+    }
+    .net-row__label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .net-row__value {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      color: var(--text-brand);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+      text-align: right;
+    }
+    .eye-btn {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-xs);
+      color: inherit;
+      background: transparent;
+    }
+    .payslip-actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      margin-top: auto;
+    }
+    .payslip-actions .btn {
+      min-height: 56px;
+      font-size: 16px;
+      line-height: 24px;
+    }
+    .payslip-actions .btn--secondary {
+      background: var(--bg-brand-secondary);
+      color: var(--text-brand);
+    }
+    .helper-strip {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-xs);
+      background: var(--bg-info-secondary);
+      color: var(--text-info);
+    }
+    .helper-strip__text {
+      flex: 1;
+      font-size: 12px;
+      line-height: 20px;
+    }
+
+    .detail-body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-md) var(--spacing-3xl);
+      background: var(--bg-surface-grey);
+    }
+    .detail-section {
+      flex: 0 0 auto;
+      min-height: 96px;
+      background: var(--bg-surface-white);
+      border-radius: var(--radius-sm);
+      overflow: visible;
+      padding: var(--spacing-lg);
+    }
+    .detail-section--income { min-height: 492px; }
+    .detail-section--deduction { min-height: 540px; }
+    .detail-section--net { min-height: 96px; }
+    .detail-section__head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+      min-height: 64px;
+      padding: 0 0 var(--spacing-lg);
+    }
+    .detail-section__title {
+      flex: 1;
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+    }
+    .detail-section__amount {
+      max-width: 148px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .detail-section__amount--income { color: var(--text-success); }
+    .detail-section__amount--deduction,
+    .detail-section__amount--net { color: var(--text-warning); }
+    .detail-divider {
+      height: 1px;
+      margin: 0 0 var(--spacing-lg);
+      background: var(--bg-divider-grey);
+    }
+    .detail-block {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      padding-bottom: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+      border-bottom: 1px solid var(--bg-divider-grey);
+    }
+    .detail-block:last-child {
+      padding-bottom: 0;
+      margin-bottom: 0;
+      border-bottom: none;
+    }
+    .detail-line {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+      min-height: 32px;
+      padding: var(--spacing-2xs) 0;
+      border-top: none;
+    }
+    .detail-line--group {
+      font-weight: 700;
+      min-height: 40px;
+      padding-bottom: var(--spacing-sm);
+    }
+    .detail-line--indent { padding-left: 0; }
+    .detail-line--bullet { padding-left: var(--spacing-xl); }
+    .detail-line__label {
+      flex: 1;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .detail-line--group .detail-line__label {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+    .detail-line--bullet .detail-line__label::before {
+      content: "•";
+      margin-right: var(--spacing-sm);
+    }
+    .detail-line--plus .detail-line__label::before {
+      content: "+ ";
+    }
+    .detail-line__amount {
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .detail-line--indent .detail-line__amount,
+    .detail-line--bullet .detail-line__amount {
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+    .detail-net {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+    }
+    .detail-net__title {
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+    }
+    .detail-net__formula {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 20px;
+      margin-top: var(--spacing-2xs);
+    }
+    .detail-net__amount {
+      color: var(--text-warning);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .formula {
+      padding: var(--spacing-sm) 0 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .sheet-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 500;
+      display: flex;
+      align-items: flex-end;
+      background: var(--bg-overlay);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.22s ease, visibility 0s 0.22s;
+    }
+    .sheet-overlay.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
+      transition: opacity 0.22s ease, visibility 0s 0s;
+    }
+    .sheet {
+      width: 100%;
+      background: var(--bg-surface-white);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      box-shadow: var(--shadow-large);
+      transform: translateY(100%);
+      transition: transform 0.22s ease;
+    }
+    .sheet-overlay.open .sheet { transform: translateY(0); }
+    .sheet__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+      padding: var(--spacing-lg) var(--spacing-md) var(--spacing-sm);
+    }
+    .sheet__title {
+      color: var(--text-primary);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 28px;
+    }
+    .sheet__close {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-xs);
+      color: var(--icon-primary);
+      background: var(--bg-surface-grey);
+    }
+    .sheet__body {
+      padding: 0 var(--spacing-md) var(--spacing-lg);
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .sheet__actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-xs) var(--spacing-md) var(--spacing-md);
+      border-top: 1px solid var(--bg-divider-grey);
+    }
+    .sheet__actions--vertical { flex-direction: column; }
+
+    .toast {
+      position: absolute;
+      left: var(--spacing-md);
+      right: var(--spacing-md);
+      bottom: 104px;
+      z-index: 700;
+      display: flex;
+      align-items: center;
+      min-height: 48px;
+      padding-left: var(--spacing-md);
+      border-radius: 16px;
+      background: var(--bg-success-primary);
+      color: var(--text-invert);
+      opacity: 0;
+      transform: translateY(var(--spacing-md));
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast__message {
+      flex: 1 0 0;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding-right: var(--spacing-md);
+    }
+    .toast__icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      color: var(--icon-inverse);
+    }
+    .toast__text-wrap {
+      flex: 1 0 0;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+    .toast__text {
+      flex: 1 0 0;
+      min-width: 0;
+      color: var(--text-invert);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+<div class="phone">
+  <div class="screen active" id="screen-home">
+    <div class="status-bar status-bar--transparent">
+      <span>9:41</span>
+      <div class="status-bar__right">
+        <span class="material-symbols-outlined" style="font-size:14px">signal_cellular_alt</span>
+        <span class="material-symbols-outlined" style="font-size:14px">wifi</span>
+        <span class="material-symbols-outlined" style="font-size:14px">battery_full</span>
+      </div>
+    </div>
+    <div class="home-header">
+      <div class="home-header__left">
+        <span class="home-header__greeting">Chúc bạn một ngày làm việc hiệu quả</span>
+        <span class="home-header__name">Nguyễn Anh Tú</span>
+      </div>
+      <div class="home-avatar">
+        <span class="material-symbols-outlined">account_circle</span>
+      </div>
+    </div>
+    <main class="home-body">
+      <div class="card app-card">
+        <div class="app-grid">
+          <button class="app-item"><div class="app-icon"><img src="Nghỉ phép icon container.png" alt=""></div><span class="app-name">Nghỉ phép</span></button>
+          <button class="app-item"><div class="app-icon"><img src="Chấm công icon container.png" alt=""></div><span class="app-name">Chấm công</span></button>
+          <button class="app-item"><div class="app-icon"><img src="Đánh giá HĐ icon container.png" alt=""></div><span class="app-name">Đánh giá HD</span></button>
+          <button class="app-item" onclick="startFaceId()"><div class="app-icon"><div class="app-badge">2</div><img src="Phiếu lương icon container.png" alt=""></div><span class="app-name">Phiếu lương</span></button>
+          <button class="app-item"><div class="app-icon"><img src="Danh bạ icon container.png" alt=""></div><span class="app-name">Danh bạ</span></button>
+          <button class="app-item"><div class="app-icon"><div class="app-badge app-badge--beta">Beta</div><img src="Manager 360 icon container.png" alt=""></div><span class="app-name">Manager 360</span></button>
+        </div>
+        <div class="app-grid-footer"><button class="link-text">Xem tất cả</button></div>
+      </div>
+      <div class="card social-card">
+        <div class="social-item">
+          <div class="social-item__content">
+            <div class="social-item__title"><span class="social-item__count">5 đồng nghiệp</span> sắp gia nhập</div>
+          </div>
+          <div class="social-avatars">
+            <div class="s-avatar"><span class="material-symbols-outlined" style="font-size:18px;color:var(--icon-primary)">person</span></div>
+            <div class="s-avatar"><span class="material-symbols-outlined" style="font-size:18px;color:var(--icon-primary)">person</span></div>
+            <div class="s-avatar s-avatar--more">+3</div>
+          </div>
+          <span class="material-symbols-outlined social-arrow">chevron_right</span>
+        </div>
+        <div class="social-item">
+          <div class="social-item__content">
+            <div class="social-item__title">Sinh nhật <span style="color:var(--text-brand);font-weight:700">sắp đến</span> <img class="social-emoji" src="Icon birthday.png" alt=""></div>
+          </div>
+          <div class="social-avatars">
+            <div class="s-avatar"><span class="material-symbols-outlined" style="font-size:18px;color:var(--icon-primary)">person</span></div>
+          </div>
+          <span class="material-symbols-outlined social-arrow">chevron_right</span>
+        </div>
+      </div>
+      <div class="section-361">
+        <span class="section-title">361° Masterise Group</span>
+        <div class="banner-361">
+          <img src="banner mag.png" alt="" onerror="this.style.display='none'">
+        </div>
+      </div>
+    </main>
+    <nav class="tab-bar" aria-label="Điều hướng chính">
+      <button class="tab-item active">
+        <img src="logo_mag_brown.png" style="width:24px;height:24px;object-fit:contain" alt="Trang chủ" onerror="this.outerHTML='<span class=\'material-symbols-outlined tab-item__icon\'>home</span>'">
+        <span class="tab-item__label">Trang chủ</span>
+      </button>
+      <button class="tab-item"><span class="material-symbols-outlined tab-item__icon">article</span><span class="tab-item__label">Tin tức</span></button>
+      <button class="tab-item--qr"><div class="qr-pill"><span class="material-symbols-outlined">qr_code_scanner</span></div></button>
+      <button class="tab-item">
+        <div class="noti-wrap"><span class="material-symbols-outlined tab-item__icon">notifications</span><span class="noti-badge">5</span></div>
+        <span class="tab-item__label">Thông báo</span>
+      </button>
+      <button class="tab-item"><span class="material-symbols-outlined tab-item__icon">account_circle</span><span class="tab-item__label">Tài khoản</span></button>
+    </nav>
+  </div>
+
+  <div class="ios-face-auth" id="ios-face-auth" aria-live="polite">
+    <div class="ios-face-card" role="dialog" aria-modal="true" aria-labelledby="ios-face-title">
+      <div class="ios-face-icon">
+        <span class="material-symbols-outlined" id="ios-face-icon" style="font-size:56px">face</span>
+      </div>
+      <div>
+        <h2 class="ios-face-title" id="ios-face-title">Face ID</h2>
+        <p class="ios-face-copy" id="ios-face-copy">Đang xác thực để mở Phiếu lương</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-payslip">
+    <div class="status-bar status-bar--branded">
+      <span>9:41</span>
+      <div class="status-bar__right">
+        <span class="material-symbols-outlined" style="font-size:14px">signal_cellular_alt</span>
+        <span class="material-symbols-outlined" style="font-size:14px">wifi</span>
+        <span class="material-symbols-outlined" style="font-size:14px">battery_full</span>
+      </div>
+    </div>
+    <header class="nav-header">
+      <button class="nav-header__back" onclick="goHome()" aria-label="Quay lại">
+        <span class="material-symbols-outlined">arrow_back_ios</span>
+      </button>
+      <span class="nav-header__title">Phiếu lương</span>
+      <button class="nav-header__action nav-header__select" onclick="toggleEmployeeMenu(event)" aria-label="Chọn mã nhân viên">
+        <span id="employee-label">6009192</span>
+        <span class="material-symbols-outlined" style="font-size:20px">expand_more</span>
+      </button>
+    </header>
+    <div class="employee-popover" id="employee-popover" role="menu" aria-label="Chọn mã nhân viên">
+      <button class="employee-option" onclick="selectEmployee('6009192')" role="menuitem">6009192</button>
+      <button class="employee-option" onclick="selectEmployee('6002919')" role="menuitem">6002919</button>
+      <button class="employee-option" onclick="selectEmployee('6001929')" role="menuitem">6001929</button>
+    </div>
+    <main class="payslip-body" onclick="markPayslipInteraction()">
+      <section class="payslip-filter-bar">
+        <button class="select-field" onclick="openSheet('month-sheet')"><span id="month-label">Tháng 3</span><span class="material-symbols-outlined" style="font-size:24px">expand_more</span></button>
+        <button class="select-field" onclick="openSheet('year-sheet')"><span id="year-label">2025</span><span class="material-symbols-outlined" style="font-size:24px">expand_more</span></button>
+      </section>
+
+      <section class="pay-period">
+        <span class="pay-period__label">Kỳ tính lương</span>
+        <button class="pay-period__value" id="period-date" onclick="openSheet('period-sheet')">01/03/2026 - 31/03/2026</button>
+      </section>
+
+      <section class="work-card card" aria-label="Thông tin công">
+        <div class="pay-row"><span class="pay-row__label">(1) Công chuẩn</span><span class="pay-row__value" data-money="25.5">******</span></div>
+        <div class="pay-row"><span class="pay-row__label">(2) Công hưởng lương</span><span class="pay-row__value" data-money="25.5">******</span></div>
+        <div class="pay-row pay-row--indent"><span class="pay-row__label">(2.1) Công làm việc thực tế</span><span class="pay-row__value" data-money="24.5">******</span></div>
+        <div class="pay-row pay-row--indent"><span class="pay-row__label">(2.2) Nghỉ hưởng lương</span><span class="pay-row__value" data-money="1">******</span></div>
+        <div class="pay-row pay-row--indent"><span class="pay-row__label">(2.3) Nghỉ không lương</span><span class="pay-row__value" data-money="0">******</span></div>
+      </section>
+
+      <section class="income-card card" aria-label="Tổng hợp thu nhập">
+        <div class="pay-row"><span class="pay-row__label">Các khoản phát sinh tăng thu nhập</span><span class="pay-row__value" data-money="154,262,088 VND">******</span></div>
+        <div class="pay-row"><span class="pay-row__label">Các khoản phát sinh giảm thu nhập</span><span class="pay-row__value" data-money="38,956,822 VND">******</span></div>
+        <div class="net-row">
+          <span class="net-row__label">Thực lĩnh</span>
+          <span class="net-row__value">
+            <span data-money="116,259,811 VND">******</span>
+            <button class="eye-btn" onclick="toggleMoney(event)" aria-label="Ẩn hoặc hiện số tiền">
+              <span class="material-symbols-outlined" id="eye-icon">visibility</span>
+            </button>
+          </span>
+        </div>
+        <div class="payslip-actions">
+          <button class="btn btn--primary" onclick="goToDetail()">Xem chi tiết</button>
+          <button class="btn btn--secondary" onclick="openSheet('export-sheet')"><span class="material-symbols-outlined" style="font-size:24px">download</span>Xuất phiếu lương</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="screen" id="screen-detail">
+    <div class="status-bar status-bar--branded">
+      <span>9:41</span>
+      <div class="status-bar__right">
+        <span class="material-symbols-outlined" style="font-size:14px">signal_cellular_alt</span>
+        <span class="material-symbols-outlined" style="font-size:14px">wifi</span>
+        <span class="material-symbols-outlined" style="font-size:14px">battery_full</span>
+      </div>
+    </div>
+    <header class="nav-header">
+      <button class="nav-header__back" onclick="goToPayslip()" aria-label="Quay lại">
+        <span class="material-symbols-outlined">arrow_back_ios</span>
+      </button>
+      <span class="nav-header__title">Payslip - Tháng 3/2026</span>
+      <button class="nav-header__action" onclick="downloadPayslip()" aria-label="Tải phiếu lương">
+        <span class="material-symbols-outlined">download</span>
+      </button>
+    </header>
+    <main class="detail-body">
+      <section class="detail-section detail-section--income">
+        <div class="detail-section__head">
+          <span class="detail-section__title">A. Các khoản phát sinh tăng thu nhập</span>
+          <span class="detail-section__amount detail-section__amount--income">154,262,088 VND</span>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="detail-block">
+          <div class="detail-line detail-line--group"><span class="detail-line__label">I. Thu nhập cơ bản</span><span class="detail-line__amount">126,000,000 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Lương cơ bản</span><span class="detail-line__amount">46,772,727 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Thưởng YTCLCV</span><span class="detail-line__amount">20,045,455 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Phụ cấp kiêm nhiệm</span><span class="detail-line__amount">57,272,727 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Phụ cấp SPV</span><span class="detail-line__amount">0 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Nghỉ không lương</span><span class="detail-line__amount">0 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Lương theo giờ</span><span class="detail-line__amount">0 VND</span></div>
+        </div>
+        <div class="detail-block">
+          <div class="detail-line detail-line--group"><span class="detail-line__label">II. Các khoản thu nhập khác</span><span class="detail-line__amount">28,262,088 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Các khoản chi trả khác</span><span class="detail-line__amount"></span></div>
+          <div class="detail-line detail-line--bullet"><span class="detail-line__label">Truy lĩnh</span><span class="detail-line__amount">23,489,361 VND</span></div>
+          <div class="detail-line detail-line--bullet"><span class="detail-line__label">Thưởng năng lực</span><span class="detail-line__amount">954,545 VND</span></div>
+          <div class="detail-line detail-line--bullet"><span class="detail-line__label">Hỗ trợ nhà ở</span><span class="detail-line__amount">3,818,182 VND</span></div>
+        </div>
+      </section>
+
+      <section class="detail-section detail-section--deduction">
+        <div class="detail-section__head">
+          <span class="detail-section__title">B. Các khoản phát sinh giảm thu nhập</span>
+          <span class="detail-section__amount detail-section__amount--deduction">38,956,822 VND</span>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="detail-block">
+          <div class="detail-line detail-line--group"><span class="detail-line__label">I. Các khoản khấu trừ</span><span class="detail-line__amount">0 VND</span></div>
+        </div>
+        <div class="detail-block">
+          <div class="detail-line detail-line--group"><span class="detail-line__label">II. Trích nộp bảo hiểm</span><span class="detail-line__amount">4,540,000 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Bảo hiểm xã hội (8%)</span><span class="detail-line__amount">2,880,000 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Bảo hiểm y tế (1.5%)</span><span class="detail-line__amount">540,000 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Bảo hiểm thất nghiệp (1%)</span><span class="detail-line__amount">1,120,000 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Trích nộp phí đoàn viên công đoàn</span><span class="detail-line__amount">0 VND</span></div>
+        </div>
+        <div class="detail-block">
+          <div class="detail-line detail-line--group"><span class="detail-line__label">III. Thuế TNCN</span><span class="detail-line__amount">34,416,822 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Tổng giảm trừ gia cảnh và các khoản giảm trừ khác</span><span class="detail-line__amount">24,200,000 VND</span></div>
+          <div class="detail-line detail-line--indent detail-line--plus"><span class="detail-line__label">Tổng thu nhập tính thuế</span><span class="detail-line__amount">126,476,633 VND</span></div>
+        </div>
+      </section>
+
+      <section class="detail-section detail-section--net">
+        <div class="detail-net">
+          <div>
+            <div class="detail-net__title">C. Thực lĩnh</div>
+            <div class="detail-net__formula">(C) = (A) - (B)</div>
+          </div>
+          <span class="detail-net__amount">116,259,811 VND</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="sheet-overlay" id="period-sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="period-title">
+      <div class="sheet__header">
+        <h2 class="sheet__title" id="period-title">Chọn kỳ lương</h2>
+        <button class="sheet__close" onclick="closeSheet('period-sheet')" aria-label="Đóng"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="sheet__body">
+        <div class="pay-row"><button class="link-text" onclick="selectPeriod('6009192')">6009192</button><span class="pay-row__value">Tháng 02/2026</span></div>
+        <div class="pay-row"><button class="link-text" onclick="selectPeriod('6009193')">6009193</button><span class="pay-row__value">Tháng 03/2026</span></div>
+        <div class="pay-row"><button class="link-text" onclick="selectPeriod('6009219')">6009219</button><span class="pay-row__value">Tháng 04/2026</span></div>
+        <div class="pay-row"><button class="link-text" onclick="selectPeriod('6009229')">6009229</button><span class="pay-row__value">Tháng 05/2026</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="month-sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="month-title">
+      <div class="sheet__header">
+        <h2 class="sheet__title" id="month-title">Chọn tháng</h2>
+        <button class="sheet__close" onclick="closeSheet('month-sheet')" aria-label="Đóng"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="sheet__body">
+        <div class="pay-row"><button class="link-text" onclick="selectMonth('Tháng 1')">Tháng 1</button></div>
+        <div class="pay-row"><button class="link-text" onclick="selectMonth('Tháng 2')">Tháng 2</button></div>
+        <div class="pay-row"><button class="link-text" onclick="selectMonth('Tháng 3')">Tháng 3</button></div>
+        <div class="pay-row"><button class="link-text" onclick="selectMonth('Tháng 4')">Tháng 4</button></div>
+        <div class="pay-row"><button class="link-text" onclick="selectMonth('Tháng 5')">Tháng 5</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="year-sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="year-title">
+      <div class="sheet__header">
+        <h2 class="sheet__title" id="year-title">Chọn năm</h2>
+        <button class="sheet__close" onclick="closeSheet('year-sheet')" aria-label="Đóng"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="sheet__body">
+        <div class="pay-row"><button class="link-text" onclick="selectYear('2024')">2024</button></div>
+        <div class="pay-row"><button class="link-text" onclick="selectYear('2025')">2025</button></div>
+        <div class="pay-row"><button class="link-text" onclick="selectYear('2026')">2026</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="export-sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="export-title">
+      <div class="sheet__header">
+        <h2 class="sheet__title" id="export-title">Xuất phiếu báo lương</h2>
+        <button class="sheet__close" onclick="closeSheet('export-sheet')" aria-label="Đóng"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="sheet__body">
+        Phiếu báo lương tháng 03/2026 sẽ được gởi đến email của bạn.
+      </div>
+      <div class="sheet__actions">
+        <button class="btn btn--secondary" onclick="closeSheet('export-sheet')">Quay về</button>
+        <button class="btn btn--primary" onclick="sendPayslipEmail()">Gửi cho tôi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="idle-sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="idle-title">
+      <div class="sheet__header">
+        <h2 class="sheet__title" id="idle-title">Bạn vẫn đang xem?</h2>
+        <button class="sheet__close" onclick="continueViewing()" aria-label="Đóng"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="sheet__body">
+        Vì đây là thông tin nhạy cảm, hệ thống sẽ tự quay về Trang chủ nếu bạn không tiếp tục thao tác.
+      </div>
+      <div class="sheet__actions sheet__actions--vertical">
+        <button class="btn btn--primary" onclick="continueViewing()">Tiếp tục xem</button>
+        <button class="btn btn--secondary" onclick="goHome()">Quay về <span id="countdown-label">(00:10)</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast toast--success" id="toast" role="status" aria-live="polite">
+    <div class="toast__message">
+      <span class="material-symbols-outlined toast__icon" aria-hidden="true">check_circle</span>
+      <div class="toast__text-wrap">
+        <p class="toast__text" id="toast-text">Đã hoàn tất</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const periodDates = {
+    '6009192': '01/02/2026 - 28/02/2026',
+    '6009193': '01/03/2026 - 31/03/2026',
+    '6009219': '01/04/2026 - 30/04/2026',
+    '6009229': '01/05/2026 - 31/05/2026'
+  };
+
+  let moneyVisible = false;
+  let idleTimer = null;
+  let countdownTimer = null;
+  let countdownLeft = 10;
+  let activeScreen = 'screen-home';
+  const IDLE_WARNING_MS = 10000;
+  let pendingFaceAuthAction = null;
+
+  function goTo(screenId) {
+    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+    const target = document.getElementById(screenId);
+    if (target) target.classList.add('active');
+    activeScreen = screenId;
+    closeEmployeeMenu();
+    closeAllSheets();
+    clearSecurityTimers();
+    if (screenId === 'screen-payslip') {
+      resetMoneyVisibility();
+      scheduleIdleWarning();
+    }
+  }
+
+  function goHome() {
+    goTo('screen-home');
+  }
+
+  function startFaceId() {
+    runFaceAuth({
+      copy: 'Đang xác thực để mở Phiếu lương',
+      successCopy: 'Đang mở Phiếu lương',
+      onSuccess: () => goTo('screen-payslip')
+    });
+  }
+
+  function runFaceAuth({ copy, successCopy, onSuccess }) {
+    if (typeof pendingFaceAuthAction === 'number') {
+      clearTimeout(pendingFaceAuthAction);
+    }
+    if (activeScreen !== 'screen-payslip') clearSecurityTimers();
+    const auth = document.getElementById('ios-face-auth');
+    const icon = document.getElementById('ios-face-icon');
+    const title = document.getElementById('ios-face-title');
+    const copyEl = document.getElementById('ios-face-copy');
+    auth.classList.remove('is-success');
+    icon.textContent = 'face';
+    title.textContent = 'Face ID';
+    copyEl.textContent = copy;
+    auth.classList.add('open');
+    pendingFaceAuthAction = setTimeout(() => confirmFaceId(successCopy, onSuccess), 1100);
+  }
+
+  function confirmFaceId(successCopy, onSuccess) {
+    const auth = document.getElementById('ios-face-auth');
+    document.getElementById('ios-face-icon').textContent = 'check';
+    document.getElementById('ios-face-title').textContent = 'Đã xác thực';
+    document.getElementById('ios-face-copy').textContent = successCopy;
+    auth.classList.add('is-success');
+    setTimeout(() => {
+      auth.classList.remove('open');
+      if (typeof onSuccess === 'function') onSuccess();
+      pendingFaceAuthAction = null;
+    }, 520);
+  }
+
+  function goToPayslip() {
+    goTo('screen-payslip');
+  }
+
+  function goToDetail() {
+    goTo('screen-detail');
+  }
+
+  function resetMoneyVisibility() {
+    moneyVisible = false;
+    renderMoney();
+  }
+
+  function toggleMoney(event) {
+    event.stopPropagation();
+    moneyVisible = !moneyVisible;
+    renderMoney();
+    markPayslipInteraction();
+  }
+
+  function renderMoney() {
+    document.querySelectorAll('[data-money]').forEach(item => {
+      item.textContent = moneyVisible ? item.dataset.money : '******';
+    });
+    const icon = document.getElementById('eye-icon');
+    if (icon) icon.textContent = moneyVisible ? 'visibility_off' : 'visibility';
+  }
+
+  function toggleEmployeeMenu(event) {
+    event.stopPropagation();
+    const popover = document.getElementById('employee-popover');
+    popover.classList.toggle('open');
+    markPayslipInteraction();
+  }
+
+  function closeEmployeeMenu() {
+    const popover = document.getElementById('employee-popover');
+    if (popover) popover.classList.remove('open');
+  }
+
+  function selectEmployee(code) {
+    document.getElementById('employee-label').textContent = code;
+    resetMoneyVisibility();
+    closeEmployeeMenu();
+    markPayslipInteraction();
+    showToast('Đã chọn mã nhân viên ' + code);
+  }
+
+  function selectMonth(month) {
+    document.getElementById('month-label').textContent = month;
+    resetMoneyVisibility();
+    closeSheet('month-sheet');
+    markPayslipInteraction();
+  }
+
+  function selectYear(year) {
+    document.getElementById('year-label').textContent = year;
+    resetMoneyVisibility();
+    closeSheet('year-sheet');
+    markPayslipInteraction();
+  }
+
+  function selectPeriod(period) {
+    const periodLabel = document.getElementById('period-label');
+    if (periodLabel) periodLabel.textContent = period;
+    document.getElementById('period-date').textContent = periodDates[period];
+    resetMoneyVisibility();
+    closeSheet('period-sheet');
+    markPayslipInteraction();
+    showToast('Đã tải lại kỳ lương ' + period);
+  }
+
+  function openSheet(id) {
+    closeEmployeeMenu();
+    const sheet = document.getElementById(id);
+    if (sheet) sheet.classList.add('open');
+    if (id === 'idle-sheet') startCountdown();
+    if (activeScreen === 'screen-payslip' && id !== 'idle-sheet') markPayslipInteraction();
+  }
+
+  function closeSheet(id) {
+    const sheet = document.getElementById(id);
+    if (sheet) sheet.classList.remove('open');
+    if (id === 'idle-sheet') clearCountdown();
+  }
+
+  function closeAllSheets() {
+    document.querySelectorAll('.sheet-overlay').forEach(sheet => sheet.classList.remove('open'));
+  }
+
+  function markPayslipInteraction() {
+    if (activeScreen !== 'screen-payslip') return;
+    if (document.getElementById('idle-sheet').classList.contains('open')) return;
+    scheduleIdleWarning();
+  }
+
+  function scheduleIdleWarning() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      if (activeScreen === 'screen-payslip') openSheet('idle-sheet');
+    }, IDLE_WARNING_MS);
+  }
+
+  function clearSecurityTimers() {
+    clearTimeout(idleTimer);
+    clearCountdown();
+  }
+
+  function startCountdown() {
+    clearCountdown();
+    countdownLeft = 10;
+    updateCountdownLabel();
+    countdownTimer = setInterval(() => {
+      countdownLeft -= 1;
+      updateCountdownLabel();
+      if (countdownLeft <= 0) goHome();
+    }, 1000);
+  }
+
+  function clearCountdown() {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+
+  function updateCountdownLabel() {
+    const label = document.getElementById('countdown-label');
+    if (label) label.textContent = `(00:${String(Math.max(countdownLeft, 0)).padStart(2, '0')})`;
+  }
+
+  function continueViewing() {
+    closeSheet('idle-sheet');
+    scheduleIdleWarning();
+  }
+
+  function sendPayslipEmail() {
+    closeSheet('export-sheet');
+    showToast('Đã gửi phiếu báo lương đến email');
+    markPayslipInteraction();
+  }
+
+  function downloadPayslip() {
+    const content = [
+      'Payslip - March 2026',
+      'Nhan vien: Nguyen Anh Tu',
+      'A. Tang thu nhap: 154,262,088 VND',
+      'B. Giam thu nhap: 38,956,822 VND',
+      'C. Thuc linh: 116,259,811 VND'
+    ].join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'payslip-march-2026.txt';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast('Đã tải phiếu lương');
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  document.querySelectorAll('.sheet-overlay').forEach(overlay => {
+    overlay.addEventListener('click', event => {
+      if (event.target === overlay && overlay.id !== 'idle-sheet') {
+        closeSheet(overlay.id);
+      }
+    });
+  });
+
+  const payslipScreen = document.getElementById('screen-payslip');
+  const payslipBody = document.querySelector('#screen-payslip .payslip-body');
+  ['pointerdown', 'touchstart', 'touchmove'].forEach(eventName => {
+    payslipScreen.addEventListener(eventName, markPayslipInteraction, { passive: true });
+  });
+  payslipBody.addEventListener('scroll', markPayslipInteraction, { passive: true });
+  window.addEventListener('keydown', markPayslipInteraction);
+  document.addEventListener('click', event => {
+    const popover = document.getElementById('employee-popover');
+    const trigger = document.querySelector('.nav-header__select');
+    if (!popover || !popover.classList.contains('open')) return;
+    if (popover.contains(event.target) || trigger.contains(event.target)) return;
+    closeEmployeeMenu();
+  });
+
+  renderMoney();
+</script>
+</body>
+</html>
